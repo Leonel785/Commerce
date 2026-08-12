@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini E-Commerce</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: #f5f6fa; color: #2d3436; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        header { background: #2c3e50; color: white; padding: 15px 0; margin-bottom: 20px; }
+        header .container { display: flex; justify-content: space-between; align-items: center; }
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; transition: 0.3s; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn:hover { opacity: 0.85; transform: translateY(-1px); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; margin-top: 20px; }
+        .card { background: white; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .card h3 { margin-bottom: 8px; color: #2c3e50; }
+        .card .precio { font-size: 20px; color: #27ae60; font-weight: bold; margin: 8px 0; }
+        .card .stock { color: #7f8c8d; font-size: 13px; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 14px; }
+        .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; padding: 24px; border-radius: 8px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ecf0f1; }
+        .tab { padding: 10px 20px; cursor: pointer; border-bottom: 3px solid transparent; }
+        .tab.active { border-bottom-color: #3498db; color: #3498db; font-weight: 600; }
+        .hidden { display: none !important; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; border-radius: 8px; overflow: hidden; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ecf0f1; }
+        th { background: #34495e; color: white; }
+        .badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .badge-pendiente { background: #f39c12; color: white; }
+        .badge-pagado { background: #27ae60; color: white; }
+        .badge-enviado { background: #3498db; color: white; }
+        .badge-entregado { background: #95a5a6; color: white; }
+        .alert { padding: 12px; border-radius: 4px; margin-bottom: 16px; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .carrito-float { position: fixed; bottom: 20px; right: 20px; background: #e74c3c; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 999; }
+        .carrito-count { position: absolute; top: -5px; right: -5px; background: #f39c12; width: 24px; height: 24px; border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .cantidad-control { display: flex; align-items: center; gap: 8px; }
+        .cantidad-control button { width: 28px; height: 28px; border-radius: 4px; border: 1px solid #ddd; background: white; cursor: pointer; }
+        .total-box { background: #2c3e50; color: white; padding: 16px; border-radius: 8px; text-align: right; font-size: 20px; margin-top: 16px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="container">
+        <h1>Mini E-Commerce</h1>
+        <div id="userSection">
+            <button class="btn btn-primary" onclick="showLogin()">Iniciar Sesion</button>
+            <button class="btn btn-warning" onclick="showRegistro()" style="margin-left:8px">Registrarse</button>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+    <div id="alertBox"></div>
+
+    <div id="loginSection" class="modal">
+        <div class="modal-content">
+            <h2>Iniciar Sesion</h2>
+            <div class="form-group">
+                <label>Usuario</label>
+                <input type="text" id="loginUser" value="cliente1">
+            </div>
+            <div class="form-group">
+                <label>Contrasena</label>
+                <input type="password" id="loginPass" value="123456">
+            </div>
+            <button class="btn btn-success" onclick="login()" style="width:100%">Entrar</button>
+            <p style="margin-top:10px;font-size:12px;color:#7f8c8d">Prueba: cliente1/123456 o admin/123456</p>
+            <p style="margin-top:10px;font-size:12px;color:#7f8c8d;text-align:center">
+                ¿No tienes cuenta? <a href="#" onclick="closeLogin();showRegistro()" style="color:#3498db">Registrate aqui</a>
+            </p>
+        </div>
+    </div>
+
+    <div id="registroSection" class="modal">
+        <div class="modal-content">
+            <h2>Crear Cuenta</h2>
+            <div class="form-group">
+                <label>Usuario</label>
+                <input type="text" id="regUsername" placeholder="ej. juanperez">
+            </div>
+            <div class="form-group">
+                <label>Contrasena</label>
+                <input type="password" id="regPassword" placeholder="Min. 4 caracteres">
+            </div>
+            <div class="form-group">
+                <label>Nombres completos</label>
+                <input type="text" id="regNombres" placeholder="Juan Perez">
+            </div>
+            <div class="form-group">
+                <label>Correo</label>
+                <input type="email" id="regCorreo" placeholder="correo@ejemplo.com">
+            </div>
+            <div class="form-group">
+                <label>Direccion</label>
+                <input type="text" id="regDireccion" placeholder="Av. Principal 123, Lima">
+            </div>
+            <div class="form-group">
+                <label>Telefono</label>
+                <input type="text" id="regTelefono" placeholder="987654321">
+            </div>
+            <div style="display:flex;gap:10px">
+                <button class="btn btn-success" onclick="registrar()" style="flex:1">Registrarme</button>
+                <button class="btn btn-danger" onclick="closeRegistro()" style="flex:1">Cancelar</button>
+            </div>
+            <p style="margin-top:10px;font-size:12px;color:#7f8c8d;text-align:center">
+                ¿Ya tienes cuenta? <a href="#" onclick="closeRegistro();showLogin()" style="color:#3498db">Inicia sesion</a>
+            </p>
+        </div>
+    </div>
+
+    <div class="tabs" id="mainTabs" style="display:none">
+        <div class="tab active" onclick="switchTab('productos', event)">Productos</div>
+        <div class="tab" onclick="switchTab('carrito', event)">Carrito</div>
+        <div class="tab" onclick="switchTab('pedidos', event)">Mis Pedidos</div>
+        <div class="tab admin-only hidden" onclick="switchTab('admin', event)">Admin Productos</div>
+        <div class="tab admin-only hidden" onclick="switchTab('admin-pedidos', event)">Pedidos Clientes</div>
+    </div>
+
+    <div id="tab-productos" class="tab-content">
+        <div style="display:flex;gap:10px;margin-bottom:16px">
+            <input type="text" id="searchInput" placeholder="Buscar producto..." style="flex:1;padding:8px" onkeyup="buscarProductos()">
+            <select id="catFilter" onchange="filtrarCategoria()">
+                <option value="">Todas las categorias</option>
+            </select>
+        </div>
+        <div class="grid" id="productosGrid"></div>
+    </div>
+
+    <div id="tab-carrito" class="tab-content hidden">
+        <h2>Mi Carrito</h2>
+        <table id="carritoTable">
+            <thead>
+                <tr><th>Producto</th><th>Precio</th><th>Cantidad</th><th>Subtotal</th><th>Acciones</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <div class="total-box">Total: S/ <span id="carritoTotal">0.00</span></div>
+        <button class="btn btn-success" onclick="crearPedido()" style="margin-top:16px;width:100%">Realizar Compra</button>
+    </div>
+
+    <div id="tab-pedidos" class="tab-content hidden">
+        <h2>Mis Pedidos</h2>
+        <table id="pedidosTable">
+            <thead>
+                <tr><th>ID</th><th>Fecha</th><th>Total</th><th>Estado</th><th>Detalles</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div id="tab-admin" class="tab-content hidden">
+        <h2>Gestion de Productos</h2>
+        <button class="btn btn-success" onclick="showProductForm()" style="margin-bottom:16px">+ Nuevo Producto</button>
+        <table id="adminProductosTable">
+            <thead>
+                <tr><th>ID</th><th>Nombre</th><th>Categoria</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div id="tab-admin-pedidos" class="tab-content hidden">
+        <h2>Pedidos de los Clientes</h2>
+        <p style="color:#7f8c8d;margin-bottom:12px">Aqui puedes ver y gestionar los pedidos de todos los clientes.</p>
+        <table id="adminPedidosTable">
+            <thead>
+                <tr><th>ID</th><th>Cliente</th><th>Fecha</th><th>Total</th><th>Estado</th><th>Detalles</th><th>Cambiar estado</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal" id="productModal">
+    <div class="modal-content">
+        <h3 id="formTitle">Nuevo Producto</h3>
+        <input type="hidden" id="prodId">
+        <div class="form-group"><label>Nombre</label><input type="text" id="prodNombre"></div>
+        <div class="form-group"><label>Categoria</label><input type="text" id="prodCategoria"></div>
+        <div class="form-group"><label>Precio</label><input type="number" step="0.01" id="prodPrecio"></div>
+        <div class="form-group"><label>Stock</label><input type="number" id="prodStock"></div>
+        <div style="display:flex;gap:10px">
+            <button class="btn btn-success" onclick="guardarProducto()">Guardar</button>
+            <button class="btn btn-danger" onclick="closeModal()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<div class="carrito-float" onclick="switchTab('carrito', event)" id="carritoFloat" style="display:none">
+    <span style="font-size:20px">&#128722;</span>
+    <div class="carrito-count" id="carritoCount">0</div>
+</div>
+
+<script>
+// Misma URL relativa: frontend y API viven en el mismo origen (localhost:8080)
+const API = '/api';
+let currentUser = null;
+let productosCache = [];
+
+function showAlert(msg, type='success') {
+    const box = document.getElementById('alertBox');
+    box.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+    setTimeout(() => box.innerHTML = '', 3000);
+}
+
+function formatMoney(n) {
+    return parseFloat(n).toFixed(2);
+}
+
+function showLogin() {
+    document.getElementById('loginSection').classList.add('active');
+}
+
+function closeLogin() {
+    document.getElementById('loginSection').classList.remove('active');
+}
+
+function showRegistro() {
+    document.getElementById('registroSection').classList.add('active');
+}
+
+function closeRegistro() {
+    document.getElementById('registroSection').classList.remove('active');
+}
+
+async function registrar() {
+    const payload = {
+        username: document.getElementById('regUsername').value.trim(),
+        password: document.getElementById('regPassword').value,
+        nombres: document.getElementById('regNombres').value.trim(),
+        correo: document.getElementById('regCorreo').value.trim(),
+        direccion: document.getElementById('regDireccion').value.trim(),
+        telefono: document.getElementById('regTelefono').value.trim()
+    };
+
+    if (!payload.username || !payload.password || !payload.nombres || !payload.correo) {
+        return showAlert('Completa los campos obligatorios (usuario, contrasena, nombres y correo)', 'error');
+    }
+    if (payload.password.length < 4) {
+        return showAlert('La contrasena debe tener al menos 4 caracteres', 'error');
+    }
+
+    try {
+        const res = await fetch(`${API}/auth/registro`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include',
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+            showAlert('Cuenta creada. Ahora inicia sesion.', 'success');
+            closeRegistro();
+            document.getElementById('loginUser').value = payload.username;
+            document.getElementById('loginPass').value = payload.password;
+            showLogin();
+        } else {
+            showAlert(data.message || 'No se pudo registrar', 'error');
+        }
+    } catch (e) {
+        showAlert('Error de conexion con el servidor', 'error');
+    }
+}
+
+// Restaura la sesion si la cookie sigue vigente (al recargar la pagina)
+async function restaurarSesion() {
+    try {
+        const res = await fetch(`${API}/auth/sesion`, {
+            credentials: 'include',
+            cache: 'no-store'
+        });
+        const data = await res.json();
+        const d = data.data || {};
+        if (d.usuarioId) {
+            currentUser = {
+                username: d.username,
+                rol: d.rol,
+                clienteId: d.clienteId
+            };
+            mostrarAppLogueada();
+        } else {
+            // ya estaba en sesion pero sin usuario -> mostrar login
+            document.getElementById('loginSection').classList.add('active');
+        }
+    } catch (e) {
+        document.getElementById('loginSection').classList.add('active');
+    }
+}
+
+function mostrarAppLogueada() {
+    document.getElementById('loginSection').classList.remove('active');
+    document.getElementById('mainTabs').style.display = 'flex';
+    document.getElementById('carritoFloat').style.display = 'flex';
+    document.getElementById('userSection').innerHTML = `
+        <span>Hola, <b>${currentUser.username}</b> (${currentUser.rol})</span>
+        <button class="btn btn-danger" onclick="logout()">Salir</button>
+    `;
+    if (currentUser.rol === 'ADMIN') {
+        document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+    }
+    cargarProductos();
+    cargarCarrito();
+    cargarPedidos();
+}
+
+window.addEventListener('DOMContentLoaded', restaurarSesion);
+
+async function login() {
+    const username = document.getElementById('loginUser').value;
+    const password = document.getElementById('loginPass').value;
+    try {
+        const res = await fetch(`${API}/auth/login`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({username, password})
+        });
+        const data = await res.json();
+        if (data.success) {
+            currentUser = data.data;
+            mostrarAppLogueada();
+        } else {
+            showAlert(data.message, 'error');
+        }
+    } catch(e) {
+        showAlert('Error de conexion con el servidor', 'error');
+    }
+}
+
+async function logout() {
+    await fetch(`${API}/auth/logout`, {method: 'POST', credentials: 'include'});
+    location.reload();
+}
+
+function switchTab(tab, ev) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+    document.getElementById(`tab-${tab}`).classList.remove('hidden');
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    if (ev && ev.target) ev.target.classList.add('active');
+    if (tab === 'carrito') cargarCarrito();
+    if (tab === 'pedidos') cargarPedidos();
+    if (tab === 'admin') cargarAdminProductos();
+    if (tab === 'admin-pedidos') cargarAdminPedidos();
+}
+
+async function cargarProductos() {
+    try {
+        const res = await fetch(`${API}/productos`, {credentials: 'include'});
+        const data = await res.json();
+        productosCache = data.data || [];
+        renderProductos(productosCache);
+        actualizarCategorias();
+    } catch(e) {
+        showAlert('Error cargando productos', 'error');
+    }
+}
+
+function renderProductos(lista) {
+    const grid = document.getElementById('productosGrid');
+    grid.innerHTML = lista.map(p => `
+        <div class="card">
+            <h3>${p.nombre}</h3>
+            <div class="precio">S/ ${formatMoney(p.precio)}</div>
+            <div class="stock">${p.categoria} | Stock: ${p.stock}</div>
+            <div style="margin-top:12px">
+                <button class="btn btn-success" onclick="agregarCarrito(${p.id}, 1)" ${p.stock<=0?'disabled':''}>
+                    ${p.stock>0?'Agregar':'Sin stock'}
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function actualizarCategorias() {
+    const cats = [...new Set(productosCache.map(p => p.categoria))];
+    const select = document.getElementById('catFilter');
+    select.innerHTML = '<option value="">Todas las categorias</option>' +
+        cats.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+function buscarProductos() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    renderProductos(productosCache.filter(p => p.nombre.toLowerCase().includes(q)));
+}
+
+function filtrarCategoria() {
+    const cat = document.getElementById('catFilter').value;
+    renderProductos(cat ? productosCache.filter(p => p.categoria === cat) : productosCache);
+}
+
+async function cargarCarrito() {
+    try {
+        const res = await fetch(`${API}/carrito`, {credentials: 'include'});
+        const data = await res.json();
+        if (data.success) renderCarrito(data.data);
+    } catch(e) {}
+}
+
+function renderCarrito(carrito) {
+    const tbody = document.querySelector('#carritoTable tbody');
+    const detalles = carrito.detalles || [];
+    document.getElementById('carritoCount').textContent = detalles.length;
+    document.getElementById('carritoTotal').textContent = formatMoney(carrito.total);
+    tbody.innerHTML = detalles.map(d => `
+        <tr>
+            <td>${d.producto.nombre}</td>
+            <td>S/ ${formatMoney(d.precioUnitario)}</td>
+            <td>
+                <div class="cantidad-control">
+                    <button onclick="updateCantidad(${d.producto.id}, ${d.cantidad-1})">-</button>
+                    <span>${d.cantidad}</span>
+                    <button onclick="updateCantidad(${d.producto.id}, ${d.cantidad+1})">+</button>
+                </div>
+            </td>
+            <td>S/ ${formatMoney(d.subtotal)}</td>
+            <td><button class="btn btn-danger" onclick="eliminarDelCarrito(${d.producto.id})">Eliminar</button></td>
+        </tr>
+    `).join('') || '<tr><td colspan="5" style="text-align:center">Carrito vacio</td></tr>';
+}
+
+async function agregarCarrito(productoId, cantidad) {
+    try {
+        const res = await fetch(`${API}/carrito/agregar`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({productoId, cantidad})
+        });
+        const data = await res.json();
+        showAlert(data.message, data.success ? 'success' : 'error');
+        if (data.success) renderCarrito(data.data);
+    } catch(e) {
+        showAlert('Error al agregar', 'error');
+    }
+}
+
+async function updateCantidad(productoId, cantidad) {
+    if (cantidad < 1) return eliminarDelCarrito(productoId);
+    try {
+        const res = await fetch(`${API}/carrito/actualizar/${productoId}?cantidad=${cantidad}`, {
+            method: 'PUT',
+            credentials: 'include'
+        });
+        const data = await res.json();
+        if (data.success) renderCarrito(data.data);
+    } catch(e) {}
+}
+
+async function eliminarDelCarrito(productoId) {
+    try {
+        const res = await fetch(`${API}/carrito/eliminar/${productoId}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        const data = await res.json();
+        if (data.success) renderCarrito(data.data);
+    } catch(e) {}
+}
+
+async function crearPedido() {
+    try {
+        const res = await fetch(`${API}/pedidos`, {
+            method: 'POST',
+            credentials: 'include'
+        });
+        const data = await res.json();
+        showAlert(data.message, data.success ? 'success' : 'error');
+        if (data.success) {
+            cargarCarrito();
+            cargarPedidos();
+            switchTab('pedidos');
+        }
+    } catch(e) {
+        showAlert('Error al crear pedido', 'error');
+    }
+}
+
+async function cargarPedidos() {
+    try {
+        const res = await fetch(`${API}/pedidos/mis-pedidos`, {credentials: 'include'});
+        const data = await res.json();
+        if (data.success) renderPedidos(data.data);
+    } catch(e) {}
+}
+
+function renderPedidos(pedidos) {
+    const tbody = document.querySelector('#pedidosTable tbody');
+    tbody.innerHTML = pedidos.map(p => `
+        <tr>
+            <td>#${p.id}</td>
+            <td>${new Date(p.fecha).toLocaleString()}</td>
+            <td>S/ ${formatMoney(p.total)}</td>
+            <td><span class="badge badge-${p.estado.toLowerCase()}">${p.estado}</span></td>
+            <td>${p.detalles.map(d => `${d.producto.nombre} x${d.cantidad}`).join(', ')}</td>
+        </tr>
+    `).join('') || '<tr><td colspan="5" style="text-align:center">No hay pedidos</td></tr>';
+}
+
+async function cargarAdminProductos() {
+    try {
+        const res = await fetch(`${API}/productos`, {credentials: 'include'});
+        const data = await res.json();
+        const tbody = document.querySelector('#adminProductosTable tbody');
+        tbody.innerHTML = (data.data || []).map(p => `
+            <tr>
+                <td>${p.id}</td>
+                <td>${p.nombre}</td>
+                <td>${p.categoria}</td>
+                <td>S/ ${formatMoney(p.precio)}</td>
+                <td>${p.stock}</td>
+                <td>
+                    <button class="btn btn-warning" onclick="editarProducto(${p.id})">Editar</button>
+                    <button class="btn btn-danger" onclick="eliminarProducto(${p.id})">Eliminar</button>
+                </td>
+            </tr>
+        `).join('');
+    } catch(e) {}
+}
+
+function showProductForm() {
+    document.getElementById('formTitle').textContent = 'Nuevo Producto';
+    document.getElementById('prodId').value = '';
+    document.getElementById('prodNombre').value = '';
+    document.getElementById('prodCategoria').value = '';
+    document.getElementById('prodPrecio').value = '';
+    document.getElementById('prodStock').value = '';
+    document.getElementById('productModal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('productModal').classList.remove('active');
+}
+
+async function guardarProducto() {
+    const id = document.getElementById('prodId').value;
+    const producto = {
+        nombre: document.getElementById('prodNombre').value,
+        categoria: document.getElementById('prodCategoria').value,
+        precio: parseFloat(document.getElementById('prodPrecio').value),
+        stock: parseInt(document.getElementById('prodStock').value)
+    };
+    const url = id ? `${API}/productos/${id}` : `${API}/productos`;
+    const method = id ? 'PUT' : 'POST';
+    try {
+        const res = await fetch(url, {
+            method,
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include',
+            body: JSON.stringify(producto)
+        });
+        const data = await res.json();
+        showAlert(data.message, data.success ? 'success' : 'error');
+        if (data.success) {
+            closeModal();
+            cargarAdminProductos();
+            cargarProductos();
+        }
+    } catch(e) {
+        showAlert('Error al guardar', 'error');
+    }
+}
+
+async function editarProducto(id) {
+    const p = productosCache.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById('prodId').value = p.id;
+    document.getElementById('prodNombre').value = p.nombre;
+    document.getElementById('prodCategoria').value = p.categoria;
+    document.getElementById('prodPrecio').value = p.precio;
+    document.getElementById('prodStock').value = p.stock;
+    document.getElementById('formTitle').textContent = 'Editar Producto';
+    document.getElementById('productModal').classList.add('active');
+}
+
+async function eliminarProducto(id) {
+    if (!confirm('Eliminar este producto?')) return;
+    try {
+        const res = await fetch(`${API}/productos/${id}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        const data = await res.json();
+        showAlert(data.message, data.success ? 'success' : 'error');
+        cargarAdminProductos();
+        cargarProductos();
+    } catch(e) {}
+}
+
+// === Admin: ver pedidos de los clientes ===
+async function cargarAdminPedidos() {
+    try {
+        const res = await fetch(`${API}/pedidos`, {credentials: 'include'});
+        const data = await res.json();
+        if (data.success) renderAdminPedidos(data.data || []);
+        else showAlert(data.message || 'No se pudieron cargar los pedidos', 'error');
+    } catch (e) {
+        showAlert('Error al cargar pedidos', 'error');
+    }
+}
+
+function renderAdminPedidos(pedidos) {
+    const tbody = document.querySelector('#adminPedidosTable tbody');
+    if (!pedidos.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">No hay pedidos registrados</td></tr>';
+        return;
+    }
+    tbody.innerHTML = pedidos.map(p => {
+        const cliente = p.cliente ? (p.cliente.nombres || 'Cliente #' + p.cliente.id) : 'Cliente N/D';
+        const detalles = (p.detalles || []).map(d => `${d.producto.nombre} x${d.cantidad}`).join(', ');
+        return `
+        <tr>
+            <td>#${p.id}</td>
+            <td>${cliente}</td>
+            <td>${new Date(p.fecha).toLocaleString()}</td>
+            <td>S/ ${formatMoney(p.total)}</td>
+            <td><span class="badge badge-${p.estado.toLowerCase()}">${p.estado}</span></td>
+            <td>${detalles}</td>
+            <td>
+                <select id="estado-${p.id}" style="padding:4px">
+                    <option value="PENDIENTE" ${p.estado==='PENDIENTE'?'selected':''}>PENDIENTE</option>
+                    <option value="PAGADO" ${p.estado==='PAGADO'?'selected':''}>PAGADO</option>
+                    <option value="ENVIADO" ${p.estado==='ENVIADO'?'selected':''}>ENVIADO</option>
+                    <option value="ENTREGADO" ${p.estado==='ENTREGADO'?'selected':''}>ENTREGADO</option>
+                </select>
+                <button class="btn btn-primary" onclick="actualizarEstadoPedido(${p.id})" style="padding:4px 8px">OK</button>
+            </td>
+        </tr>
+        `;
+    }).join('');
+}
+
+async function actualizarEstadoPedido(id) {
+    const select = document.getElementById(`estado-${id}`);
+    const estado = select.value;
+    try {
+        const res = await fetch(`${API}/pedidos/${id}/estado?estado=${estado}`, {
+            method: 'PUT',
+            credentials: 'include'
+        });
+        const data = await res.json();
+        showAlert(data.message, data.success ? 'success' : 'error');
+        if (data.success) cargarAdminPedidos();
+    } catch (e) {
+        showAlert('Error al actualizar estado', 'error');
+    }
+}
+</script>
+
+</body>
+</html>
